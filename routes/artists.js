@@ -13,13 +13,23 @@ const {
 const validateArtist = (req, res, next) => {
    const { artist } = req.body;
 
-   return artist.isCurrentlyEmployed !== 0 ? next() : res.sendStatus(400);
+   const name = artist.name.trim();
+   const dateOfBirth = artist.dateOfBirth.trim();
+   const biography = artist.biography.trim();
+   const isCurrentlyEmployed = artist.isCurrentlyEmployed === 0 ? 0 : 1;
+
+   if (!name || !dateOfBirth || !biography) {
+      return res.sendStatus(400);
+   } else {
+      next();
+   }
 };
 
-router.get("/artists", getAllArtists);
-router.post("/artists", validateArtist, createNewArtists);
-router.put("/artists/:id", updateArtist);
-router.get("/artists/:id", getArtistById);
-router.get("/artists/:id", deleteArtist);
+router.get("/", getAllArtists);
+router.post("/", validateArtist, createNewArtists);
+
+router.get("/:id", getArtistById);
+router.put("/:id", validateArtist, updateArtist);
+router.delete("/:id", deleteArtist);
 
 module.exports = router;

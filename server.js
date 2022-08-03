@@ -7,6 +7,7 @@ const db = new sqlite3.Database(
 );
 // API
 const routesArtists = require("./routes/artists.js");
+const routesSeries = require("./routes/series.js");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -19,7 +20,9 @@ app.get("/", (req, res) => {
    res.send(`Welcome to my API !`);
 });
 
-app.use("/api", routesArtists);
+// endpoints
+app.use("/api/artists", routesArtists);
+app.use("/api/series", routesSeries);
 
 app.listen(PORT, () => {
    console.log(`Server is running on http://localhost:${PORT}`);

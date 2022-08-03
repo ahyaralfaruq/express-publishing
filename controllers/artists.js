@@ -3,19 +3,21 @@ const db = new sqlite3.Database(
    process.env.TEST_DATABASE || "./database.sqlite"
 );
 
-const getAllArtists = async (req, res) => {
+const getAllArtists = async (req, res, next) => {
    try {
       await db.all(`SELECT * FROM Artist`, (err, data) => {
-         err
-            ? res.status(404).send("404 Not Found")
-            : res.status(200).json(data);
+         return err
+            ? next(err)
+            : !data
+            ? next(err)
+            : res.status(204).json(data);
       });
    } catch (error) {
-      res.status(500).send(error);
+      res.status(500).json(error);
    }
 };
 
-const createNewArtists = async (req, res) => {
+const createNewArtists = async (req, res, next) => {
    const { artist } = req.body;
 
    try {
@@ -29,9 +31,11 @@ const createNewArtists = async (req, res) => {
             $isCurrentlyEmployed: artist.isCurrentlyEmployed,
          },
          (err, data) => {
-            err
-               ? res.status(400).send("Input field is not valid")
-               : res.status(201).json(data);
+            return err
+               ? next(err)
+               : !data
+               ? next(err)
+               : res.status(204).json(data);
          }
       );
    } catch (error) {
@@ -39,7 +43,7 @@ const createNewArtists = async (req, res) => {
    }
 };
 
-const getArtistById = async (req, res) => {
+const getArtistById = async (req, res, next) => {
    const { id } = req.params;
 
    try {
@@ -49,9 +53,11 @@ const getArtistById = async (req, res) => {
             $id: id,
          },
          (err, data) => {
-            err
-               ? res.status(404).send(`Artist with ID : ${id} 404 Not Found`)
-               : res.status(200).json(data);
+            return err
+               ? next(err)
+               : !data
+               ? next(err)
+               : res.status(204).json(data);
          }
       );
    } catch (error) {
@@ -59,7 +65,7 @@ const getArtistById = async (req, res) => {
    }
 };
 
-const updateArtist = async (req, res) => {
+const updateArtist = async (req, res, next) => {
    const { id } = req.params;
    const { artist } = req.body;
 
@@ -74,9 +80,11 @@ const updateArtist = async (req, res) => {
             $id: id,
          },
          (err, data) => {
-            err
-               ? res.status(400).send("Update field")
-               : res.status(200).json(data);
+            return err
+               ? next(err)
+               : !data
+               ? next(err)
+               : res.status(204).json(data);
          }
       );
    } catch (error) {
@@ -84,21 +92,21 @@ const updateArtist = async (req, res) => {
    }
 };
 
-const deleteArtist = async (req, res) => {
+const deleteArtist = async (req, res, next) => {
    const { id } = req.params;
 
    try {
       db.run(
-         `DELETE FROM Artist WHERE id = $id`,
+         `UPDATE Artist SET is_currently_employed = 0 WHERE id = $id`,
          {
             $id: id,
          },
          (err, data) => {
-            err
-               ? res.status(404).send(`Artist with ID : ${id} not found`)
-               : res
-                    .status(200)
-                    .send(`Delete artist with ID : ${id} successfully !`);
+            return err
+               ? next(err)
+               : !data
+               ? next(err)
+               : res.status(204).json(data);
          }
       );
    } catch (error) {
