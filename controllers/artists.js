@@ -91,7 +91,7 @@ const updateArtist = async (req, res, next) => {
       const ice = artist.isCurrentlyEmployed === 0 ? 0 : 1;
 
       if (!name || !dob || !biography) {
-         return res.status(400).send(`invalid data`);
+         return res.status(400).send(`invalid Request`);
       }
 
       await db.run(
@@ -103,13 +103,16 @@ const updateArtist = async (req, res, next) => {
             $isCurrentlyEmployed: ice,
             $id: id,
          },
-         function (err, data) {
+         async function (err, data) {
             if (err) {
                return res.status(400).json(err);
             }
-            db.get(`SELECT * FROM Artist WHERE id = ${id}`, (eror, artist) => {
-               return res.status(200).json({ artist: artist });
-            });
+            await db.get(
+               `SELECT * FROM Artist WHERE id = ${id}`,
+               (eror, artist) => {
+                  return res.status(200).json({ artist: artist });
+               }
+            );
          }
       );
    } catch (error) {
