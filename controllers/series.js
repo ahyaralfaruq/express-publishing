@@ -6,7 +6,7 @@ const db = new sqlite3.Database(
 const getSeries = async (req, res, next) => {
    try {
       await db.all("SELECT * FROM Series", (err, data) => {
-         return err ? next(err) : res.status(200).json(data);
+         return err ? next(err) : res.status(200).json({ series: data });
       });
    } catch (error) {
       res.status(404).json(error);

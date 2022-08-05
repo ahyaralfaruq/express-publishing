@@ -3,39 +3,56 @@ const db = new sqlite3.Database(
    process.env.TEST_DATABASE || "./database.sqlite"
 );
 
-const getAllArtists = async (req, res, next) => {
+const getArtists = async (req, res, next) => {
    try {
-      await db.all(`SELECT * FROM Artist`, (err, data) => {
-         return err
-            ? next(err)
-            : !data
-            ? next(err)
-            : res.status(204).json(data);
-      });
-   } catch (error) {
-      res.status(500).json(error);
-   }
-};
-
-const createNewArtists = async (req, res, next) => {
-   const { artist } = req.body;
-
-   try {
-      // console.log(data);
-      await db.run(
-         `INSERT INTO Artist (name, date_of_birth, biography, is_currently_employed) VALUES ($name, $dateOfBirth, $biography, $isCurrentlyEmployed)`,
-         {
-            $name: artist.name,
-            $dateOfBirth: artist.dateOfBirth,
-            $biography: artist.biography,
-            $isCurrentlyEmployed: artist.isCurrentlyEmployed,
-         },
+      await db.all(
+         `SELECT * FROM Artist WHERE is_currently_employed = 1`,
          (err, data) => {
             return err
                ? next(err)
                : !data
                ? next(err)
-               : res.status(204).json(data);
+               : res.status(200).json({ artists: data });
+         }
+      );
+   } catch (error) {
+      res.status(500).json(error);
+   }
+};
+
+const createArtists = async (req, res, next) => {
+   const { artist } = req.body;
+
+   try {
+      const name = artist.name;
+      const dob = artist.dateOfBirth;
+      const biography = artist.biography;
+      const ice = artist.isCurrentlyEmployed === 0 ? 0 : 1;
+
+      if (!name || !dob || !biography) {
+         return res.status(400).send(`invalid data`);
+      }
+
+      await db.run(
+         `INSERT INTO Artist (name, date_of_birth, biography, is_currently_employed) VALUES ($name, $dateOfBirth, $biography, $isCurrentlyEmployed)`,
+         {
+            $name: name,
+            $dateOfBirth: dob,
+            $biography: biography,
+            $isCurrentlyEmployed: ice,
+         },
+         async function (err, data) {
+            // console.log(this.lastID);
+            if (err) {
+               return res.status(400).json(err);
+            }
+            // res.status(201).json({ artist: data });
+            await db.get(
+               `SELECT * FROM Artist WHERE id = ${this.lastID}`,
+               (eror, result) => {
+                  return res.status(201).json({ artist: result });
+               }
+            );
          }
       );
    } catch (error) {
@@ -49,15 +66,13 @@ const getArtistById = async (req, res, next) => {
    try {
       await db.get(
          `SELECT * FROM Artist WHERE id = $id`,
-         {
-            $id: id,
-         },
+         { $id: id },
          (err, data) => {
-            return err
-               ? next(err)
-               : !data
-               ? next(err)
-               : res.status(204).json(data);
+            if (err || !data) {
+               return res.status(404).json(err);
+            } else {
+               return res.status(200).json({ artist: data });
+            }
          }
       );
    } catch (error) {
@@ -70,21 +85,31 @@ const updateArtist = async (req, res, next) => {
    const { artist } = req.body;
 
    try {
+      const name = artist.name;
+      const dob = artist.dateOfBirth;
+      const biography = artist.biography;
+      const ice = artist.isCurrentlyEmployed === 0 ? 0 : 1;
+
+      if (!name || !dob || !biography) {
+         return res.status(400).send(`invalid data`);
+      }
+
       await db.run(
-         `UPDATE Artist SET name = "$name", date_of_birth = "$dateOfBirth",  = "$biography", is_currently_employed = "$isCurrentlyEmployed" WHERE id = "$id"`,
+         `UPDATE Artist SET name = $name, date_of_birth = $dateOfBirth, biography = $biography, is_currently_employed = $isCurrentlyEmployed WHERE id = $id`,
          {
-            $name: artist.name,
-            $dateOfBirth: artist.dateOfBirth,
-            $biography: artist.biography,
-            $isCurrentlyEmployed: artist.isCurrentlyEmployed,
+            $name: name,
+            $dateOfBirth: dob,
+            $biography: biography,
+            $isCurrentlyEmployed: ice,
             $id: id,
          },
-         (err, data) => {
-            return err
-               ? next(err)
-               : !data
-               ? next(err)
-               : res.status(204).json(data);
+         function (err, data) {
+            if (err) {
+               return res.status(400).json(err);
+            }
+            db.get(`SELECT * FROM Artist WHERE id = ${id}`, (eror, artist) => {
+               return res.status(200).json({ artist: artist });
+            });
          }
       );
    } catch (error) {
@@ -101,12 +126,17 @@ const deleteArtist = async (req, res, next) => {
          {
             $id: id,
          },
-         (err, data) => {
-            return err
-               ? next(err)
-               : !data
-               ? next(err)
-               : res.status(204).json(data);
+         async function (err, data) {
+            if (err) {
+               return res.status(400).json(err);
+            } else {
+               db.get(
+                  `SELECT * FROM Artist WHERE id = ${id}`,
+                  (eror, artist) => {
+                     return res.status(200).json({ artist: artist });
+                  }
+               );
+            }
          }
       );
    } catch (error) {
@@ -115,8 +145,8 @@ const deleteArtist = async (req, res, next) => {
 };
 
 module.exports = {
-   getAllArtists,
-   createNewArtists,
+   getArtists,
+   createArtists,
    updateArtist,
    getArtistById,
    deleteArtist,
