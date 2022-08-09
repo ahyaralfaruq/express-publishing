@@ -1,8 +1,6 @@
 > x-press-publishing@1.0.0 test
 > mocha
 
-Server is running on http://localhost:8081
-
 Artist Table
 ✔ should exist
 ✔ should have name, date_of_birth, biography, and is_currently_employed columns with appropriate data types (290ms)
