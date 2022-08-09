@@ -10,6 +10,10 @@ const {
    deleteSeries,
 } = require("../controllers/series.js");
 
+const issuesRouter = require("./issues.js");
+
+router.use("/:seriesId/issues", issuesRouter);
+
 router.get("/", getSeries);
 router.post("/", createSeries);
 router.get("/:id", getSeriesById);

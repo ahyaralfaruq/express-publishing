@@ -1,17 +1,21 @@
 const express = require("express");
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
+
+// console.log(router);
 
 const {
    getIssues,
    postIssues,
-   getIssuesById,
+   cekUpdate,
    updateIssues,
    deleteIssues,
 } = require("../controllers/issues.js");
 
-router.get("/issues", getIssues);
-router.get("/issues", postIssues);
-router.get("/issues/:issueId", updateIssues);
-router.get("/issues/:issueId", deleteIssues);
+router.get("/:issueId", cekUpdate);
+
+router.get("/", getIssues);
+router.post("/", postIssues);
+router.put("/:issueId", updateIssues);
+router.delete("/:issueId", deleteIssues);
 
 module.exports = router;
